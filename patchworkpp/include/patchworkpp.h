@@ -21,6 +21,15 @@ struct PointXYZ {
     PointXYZ(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
 };
 
+struct PointXYZI {
+    float x;
+    float y;
+    float z;
+    float i;
+
+    PointXYZI(float _x, float _y, float _z, float _i) : x(_x), y(_y), z(_z), i(_i) {}
+};
+
 struct RevertCandidate 
 {   
     int concentric_idx;
@@ -28,9 +37,9 @@ struct RevertCandidate
     double ground_flatness;
     double line_variable;
     Eigen::VectorXf pc_mean;
-    vector<PointXYZ> regionwise_ground;
+    vector<PointXYZI> regionwise_ground;
     
-    RevertCandidate(int _c_idx, int _s_idx, double _flatness, double _line_var, Eigen::VectorXf _pc_mean, vector<PointXYZ> _ground)
+    RevertCandidate(int _c_idx, int _s_idx, double _flatness, double _line_var, Eigen::VectorXf _pc_mean, vector<PointXYZI> _ground)
      : concentric_idx(_c_idx), sector_idx(_s_idx), ground_flatness(_flatness), line_variable(_line_var), pc_mean(_pc_mean), regionwise_ground(_ground) {}
 };
 
@@ -109,7 +118,7 @@ struct Params
 class PatchWorkpp {
 
 public:
-    typedef std::vector<vector<PointXYZ>> Ring;
+    typedef std::vector<vector<PointXYZI>> Ring;
     typedef std::vector<Ring> Zone;
 
     PatchWorkpp(patchwork::Params _params) : params_(_params) {
@@ -149,8 +158,8 @@ public:
     double getHeight() { return params_.sensor_height; }
     double getTimeTaken() { return time_taken_; }
 
-    Eigen::MatrixX3f getGround() { return toEigenCloud(cloud_ground_); }
-    Eigen::MatrixX3f getNonground() { return toEigenCloud(cloud_nonground_); }
+    Eigen::MatrixX4f getGround() { return toEigenCloud(cloud_ground_); }
+    Eigen::MatrixX4f getNonground() { return toEigenCloud(cloud_nonground_); }
     
     Eigen::MatrixX3f getCenters() { return toEigenCloud(centers_); }
     Eigen::MatrixX3f getNormals() { return toEigenCloud(normals_); }
@@ -180,16 +189,17 @@ private:
 
     vector<Zone> ConcentricZoneModel_;
 
-    vector<PointXYZ> ground_pc_, non_ground_pc_;
-    vector<PointXYZ> regionwise_ground_, regionwise_nonground_;
+    vector<PointXYZI> ground_pc_, non_ground_pc_;
+    vector<PointXYZI> regionwise_ground_, regionwise_nonground_;
 
-    vector<PointXYZ> cloud_ground_, cloud_nonground_;
+    vector<PointXYZI> cloud_ground_, cloud_nonground_;
 
     vector<PointXYZ> centers_, normals_;
 
     Eigen::MatrixX3f toEigenCloud(vector<PointXYZ> cloud);
+    Eigen::MatrixX4f toEigenCloud(vector<PointXYZI> cloud);
 
-    void addCloud(vector<PointXYZ> &cloud, vector<PointXYZ> &add);
+    void addCloud(vector<PointXYZI> &cloud, vector<PointXYZI> &add);
     
     void flush_patches(std::vector<Zone> &czm);
 
@@ -199,7 +209,7 @@ private:
     
     void temporal_ground_revert(std::vector<double> ring_flatness, std::vector<patchwork::RevertCandidate> candidates, int concentric_idx);
     
-    double calc_point_to_plane_d(PointXYZ p, Eigen::VectorXf normal, double d);
+    double calc_point_to_plane_d(PointXYZI p, Eigen::VectorXf normal, double d);
     void calc_mean_stdev(std::vector<double> vec, double &mean, double &stdev);
 
     void update_elevation_thr();
@@ -209,20 +219,20 @@ private:
 
     double xy2radius(const double &x, const double &y);
 
-    void estimate_plane(const vector<PointXYZ> &ground);
+    void estimate_plane(const vector<PointXYZI> &ground);
 
     void extract_piecewiseground(
-            const int zone_idx, const vector<PointXYZ> &src,
-            vector<PointXYZ> &dst,
-            vector<PointXYZ> &non_ground_dst);
+            const int zone_idx, const vector<PointXYZI> &src,
+            vector<PointXYZI> &dst,
+            vector<PointXYZI> &non_ground_dst);
 
     void extract_initial_seeds(
-            const int zone_idx, const vector<PointXYZ> &p_sorted,
-            vector<PointXYZ> &init_seeds);
+            const int zone_idx, const vector<PointXYZI> &p_sorted,
+            vector<PointXYZI> &init_seeds);
 
     void extract_initial_seeds(
-            const int zone_idx, const vector<PointXYZ> &p_sorted,
-            vector<PointXYZ> &init_seeds, double th_seed);
+            const int zone_idx, const vector<PointXYZI> &p_sorted,
+            vector<PointXYZI> &init_seeds, double th_seed);
 
 };
 
